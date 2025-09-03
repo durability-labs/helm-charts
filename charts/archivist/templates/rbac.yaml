@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "codex.serviceAccountName" . }}
+  name: {{ include "archivist.serviceAccountName" . }}
   labels:
-    {{- include "codex.labels" . | nindent 4 }}
+    {{- include "archivist.labels" . | nindent 4 }}
   {{- with .Values.serviceAccount.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -18,24 +18,24 @@ automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "codex.role.name" . }}
+  name: {{ include "archivist.role.name" . }}
   labels:
-    {{- include "codex.labels" . | nindent 4 }}
+    {{- include "archivist.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "codex.role.name" . }}
+  name: {{ include "archivist.role.name" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "codex.serviceAccountName" . }}
+  name: {{ include "archivist.serviceAccountName" . }}
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "codex.role.name" . }}
+  name: {{ include "archivist.role.name" . }}
   labels:
-    {{- include "codex.labels" . | nindent 4 }}
+    {{- include "archivist.labels" . | nindent 4 }}
 rules:
 {{ toYaml .Values.serviceAccount.rbac.rules | indent 0 }}
 {{- end }}
@@ -45,9 +45,9 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "codex.clusterRole.name" . }}
+  name: {{ include "archivist.clusterRole.name" . }}
   labels:
-    {{- include "codex.labels" . | nindent 4 }}
+    {{- include "archivist.labels" . | nindent 4 }}
 rules:
 {{ toYaml .Values.serviceAccount.rbac.clusterRules | indent 0 }}
 
@@ -55,17 +55,17 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "codex.clusterRole.name" . }}
+  name: {{ include "archivist.clusterRole.name" . }}
   labels:
-    {{- include "codex.labels" . | nindent 4 }}
+    {{- include "archivist.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "codex.clusterRole.name" . }}
+  name: {{ include "archivist.clusterRole.name" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "codex.serviceAccountName" . }}
-  namespace: {{ include "codex.namespace" . }}
+  name: {{ include "archivist.serviceAccountName" . }}
+  namespace: {{ include "archivist.namespace" . }}
 {{- end }}
 {{- end }}
 {{- end }}

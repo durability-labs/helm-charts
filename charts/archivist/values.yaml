@@ -1,4 +1,4 @@
-# Default values for codex.
+# Default values for archivist.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -23,13 +23,13 @@ statefulSet:
   # and new ones with index in the names will be created
   # this is why by default we set it to false, to avoid destructive transition
   #        name     StatefulSet
-  # true:  codex --> codex
-  # false: codex --> codex-1
+  # true:  archivist --> archivist
+  # false: archivist --> archivist-1
   prettify: false
 
 image:
   # Image repository
-  repository: codexstorage/nim-codex
+  repository: durabilitylabs/archivist-node
   # Image tag
   tag: latest
   # Image pull policy
@@ -105,79 +105,80 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-# Codex container command with arguments
-codex:
+# Archivist container command with arguments
+archivist:
   command:
   # known as Docker ENTRYPOINT
   # - /bin/bash
   # - /docker-entrypoint.sh
   args:
   # known as Docker CMD
-  # - codex
+  # - archivist
   # - --bootstrap-node=spr:xxx
   # - --bootstrap-node=spr:yyy
   # - --data-dir=/data
   #
-  # Codex configuration using environment variables
+  # Archivist configuration using environment variables
   env:
     # Logging
-    CODEX_LOG_LEVEL: INFO
+    ARCHIVIST_LOG_LEVEL: INFO
     # TRACE;warn:discv5,providers,manager,cache;warn:libp2p,multistream,switch,transport,tcptransport,semaphore,asyncstreamwrapper,lpstream,mplex,mplexchannel,noise,bufferstream,mplexcoder,secure,chronosstream,connection,connmanager,websock,ws-session
     #
     # Metrics
-    # CODEX_METRICS: true
-    # CODEX_METRICS_ADDRESS: 0.0.0.0
-    # CODEX_METRICS_PORT: 8008
+    # ARCHIVIST_METRICS: true
+    # ARCHIVIST_METRICS_ADDRESS: 0.0.0.0
+    # ARCHIVIST_METRICS_PORT: 8008
     #
     # API
-    # CODEX_API_BINDADDR: 0.0.0.0
-    # CODEX_API_PORT: 8080
+    # ARCHIVIST_API_BINDADDR: 0.0.0.0
+    # ARCHIVIST_API_PORT: 8080
     #
     # P2P communication
-    # Currently, only one node can be set via env variable - https://github.com/codex-storage/nim-codex/issues/525
-    # and we can use codex.args to pass multiple bootstrap nodes
-    # CODEX_BOOTSTRAP: ""
-    # CODEX_NAT: "127.0.0.1"
-    CODEX_LISTEN_ADDRS: /ip4/0.0.0.0/tcp/8070
-    CODEX_DISC_IP: 0.0.0.0
-    CODEX_DISC_PORT: 8090
+    # Currently, only one bootstrap node can be set via env variable and we can use --bootstrap-node arg multiple times
+    # or use a Docker entrypoint helper variable BOOTSTRAP_NODE_FROM_URL="https://spr.archivist.storage/testnet"
+    # or use NETWORK="testnet" helper variable, and set it based on the network name, which will set BOOTSTRAP_NODE_FROM_URL
+    # ARCHIVIST_BOOTSTRAP: ""
+    # ARCHIVIST_NAT: "127.0.0.1"
+    ARCHIVIST_LISTEN_ADDRS: /ip4/0.0.0.0/tcp/8070
+    ARCHIVIST_DISC_IP: 0.0.0.0
+    ARCHIVIST_DISC_PORT: 8090
     #
     # Storage
-    CODEX_DATA_DIR: /data
+    ARCHIVIST_DATA_DIR: /data
     # b, k/kb, m/mb, g/gb, t/tb, p/pb
-    # CODEX_STORAGE_QUOTA: 18gb
+    # ARCHIVIST_STORAGE_QUOTA: 18gb
     #
     # Maintenance
     # s, m, h, d, w
-    # CODEX_BLOCK_TTL: 1d
-    # CODEX_BLOCK_MI: 10m
-    # CODEX_BLOCK_MN: 1000
+    # ARCHIVIST_BLOCK_TTL: 1d
+    # ARCHIVIST_BLOCK_MI: 10m
+    # ARCHIVIST_BLOCK_MN: 1000
     #
     # Persistence
-    # CODEX_PERSISTENCE: false
-    # CODEX_ETH_PROVIDER: ws://localhost:8545
-    # CODEX_ETH_ACCOUNT: 0x1234567890123456789012345678901234567890
-    # file name `codex-eth-private-key` will be used as a secret name to be mounted to the Pod
-    # CODEX_ETH_PRIVATE_KEY: /opt/codex-eth-private-key
-    # CODEX_MARKETPLACE_ADDRESS: 0x1234567890123456789012345678901234567890
+    # ARCHIVIST_PERSISTENCE: false
+    # ARCHIVIST_ETH_PROVIDER: ws://localhost:8545
+    # ARCHIVIST_ETH_ACCOUNT: 0x1234567890123456789012345678901234567890
+    # file name `archivist-eth-private-key` will be used as a secret name to be mounted to the Pod
+    # ARCHIVIST_ETH_PRIVATE_KEY: /opt/archivist-eth-private-key
+    # ARCHIVIST_MARKETPLACE_ADDRESS: 0x1234567890123456789012345678901234567890
 
   extraEnv:
-    - name: CODEX_ETH_PROVIDER
+    - name: ARCHIVIST_ETH_PROVIDER
       valueFrom:
         secretKeyRef:
-          name: codex-eth-provider
-          key: CODEX_ETH_PROVIDER
-    - name: CODEX_ETH_ACCOUNT
+          name: archivist-eth-provider
+          key: ARCHIVIST_ETH_PROVIDER
+    - name: ARCHIVIST_ETH_ACCOUNT
       valueFrom:
         secretKeyRef:
-          name: codex_eth_account
-          key: CODEX_ETH_ACCOUNT_replica_index_pod_index
+          name: archivist_eth_account
+          key: ARCHIVIST_ETH_ACCOUNT_replica_index_pod_index
 
   # Extra environment variables
   # extraEnv:
     # When multiple StatefulSets are created, we can use replica_index to pass different ConfigMap/Secrets to each replica
     #      Value                                                    Secrets
-    # codex_eth_account_replica_index-pod_index --> codex_eth_account_1_1, codex_eth_account_2_1, codex_eth_account_3_1, ...
+    # archivist_eth_account_replica_index-pod_index --> archivist_eth_account_1_1, archivist_eth_account_2_1, archivist_eth_account_3_1, ...
     #
     # - name: FOO
     #   value: BAR
@@ -194,14 +195,14 @@ codex:
     #       name: secret-name
     #       key: secret-key
     #
-    # - name: CODEX_ETH_ACCOUNT
+    # - name: ARCHIVIST_ETH_ACCOUNT
     #   valueFrom:
     #     secretKeyRef:
-    #       name: codex_eth_account
-    #       key: codex_eth_account_replica_index-pod_index
+    #       name: archivist_eth_account
+    #       key: archivist_eth_account_replica_index-pod_index
 
   # Marketplace storage for sale configuration
-  # We use postStart lifecycle hook to setup Codex node marketplace configuration via API
+  # We use postStart lifecycle hook to setup Archivist node marketplace configuration via API
   # mutually exclusive with the lifecycle configuration bellow
   marketplace: {}
     # totalSize: "8000000000"
@@ -246,17 +247,17 @@ ports:
 
 # Service
 service:
-  # Service type to deploy - nodeport is required when Codex node should be reachable from the Internet
+  # Service type to deploy - nodeport is required when Archivist node should be reachable from the Internet
   type:
     - service
     - nodeport
   # Prettify service name
   # single StatefulSet
-  # true:  codex-service   codex-nodeport
-  # false: codex-1-service codex-1-nodeport
+  # true:  archivist-service   archivist-nodeport
+  # false: archivist-1-service archivist-1-nodeport
   # multiple StatefulSets
-  # true:  codex-1-service   codex-1-nodeport   codex-2-service   codex-2-nodeport
-  # false: codex-1-1-service codex-1-1-nodeport codex-2-1-service codex-2-1-nodeport
+  # true:  archivist-1-service   archivist-1-nodeport   archivist-2-service   archivist-2-nodeport
+  # false: archivist-1-1-service archivist-1-1-nodeport archivist-2-1-service archivist-2-1-nodeport
   prettify: true
   # API port
   api:
@@ -291,7 +292,7 @@ extraPorts: []
   #   port: 1234
   #   protocol: TCP
 
-# Ingress for Codex API
+# Ingress for Archivist API
 ingress:
   # Enable ingress
   enabled: false
@@ -349,7 +350,7 @@ startupProbe: {}
 # Liveness probe
 livenessProbe:
   httpGet:
-    path: /api/codex/v1/debug/info
+    path: /api/archivist/v1/debug/info
     port: '{{ .Values.ports.api.name }}'
     scheme: HTTP
   initialDelaySeconds: 30
@@ -361,7 +362,7 @@ livenessProbe:
 # Readiness probe
 readinessProbe:
   httpGet:
-    path: /api/codex/v1/debug/info
+    path: /api/archivist/v1/debug/info
     port: '{{ .Values.ports.api.name }}'
     scheme: HTTP
   initialDelaySeconds: 30
@@ -416,10 +417,10 @@ initContainers: []
   #     - -c
   #     - |
   #         echo "clean-up datadir"
-  #         rm -rf {{ .Values.codex.env.CODEX_DATA_DIR }}/*
+  #         rm -rf {{ .Values.archivist.env.ARCHIVIST_DATA_DIR }}/*
   #   volumeMounts:
   #     - name: '{{ .Values.persistence.name }}'
-  #       mountPath: '{{ .Values.codex.env.CODEX_DATA_DIR }}'
+  #       mountPath: '{{ .Values.archivist.env.ARCHIVIST_DATA_DIR }}'
 
 # Additional
 extraContainers: []

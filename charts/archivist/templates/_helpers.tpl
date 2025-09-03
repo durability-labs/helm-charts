@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "codex.name" -}}
+{{- define "archivist.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "codex.fullname" -}}
+{{- define "archivist.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,31 +26,31 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart namespace.
 */}}
-{{- define "codex.namespace" -}}
+{{- define "archivist.namespace" -}}
 {{ default .Release.Namespace .Values.namespaceOverride }}
 {{- end }}
 
 {{/*
 Create ingress name.
 */}}
-{{- define "codex.ingress.name" -}}
+{{- define "archivist.ingress.name" -}}
 {{- if .Values.ingress.fullnameOverride }}
 {{- .Values.ingress.fullnameOverride }}
 {{- else }}
-{{- include "codex.fullname" . }}
+{{- include "archivist.fullname" . }}
 {{- end }}
 {{- end }}
 
-{{- define "codex.chart" -}}
+{{- define "archivist.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels.
 */}}
-{{- define "codex.labels" -}}
-helm.sh/chart: {{ include "codex.chart" . }}
-{{ include "codex.selectorLabels" . }}
+{{- define "archivist.labels" -}}
+helm.sh/chart: {{ include "archivist.chart" . }}
+{{ include "archivist.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -60,17 +60,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels.
 */}}
-{{- define "codex.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "codex.name" . }}
+{{- define "archivist.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "archivist.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use.
 */}}
-{{- define "codex.serviceAccountName" -}}
+{{- define "archivist.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "codex.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "archivist.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
@@ -79,19 +79,19 @@ Create the name of the service account to use.
 {{/*
 Role name.
 */}}
-{{- define "codex.clusterRole.name" -}}
-{{ print (include "codex.namespace" .) "-" (include "codex.serviceAccountName" .) }}
+{{- define "archivist.clusterRole.name" -}}
+{{ print (include "archivist.namespace" .) "-" (include "archivist.serviceAccountName" .) }}
 {{- end }}
 
-{{- define "codex.role.name" -}}
-{{ include "codex.serviceAccountName" . }}
+{{- define "archivist.role.name" -}}
+{{ include "archivist.serviceAccountName" . }}
 {{- end }}
 
 {{/*
 StatefulSets count.
 */}}
-{{- define "codex.statefulSetCount" -}}
-{{- if eq (include "codex.service.nodeport.enabled" .) "true" }}
+{{- define "archivist.statefulSetCount" -}}
+{{- if eq (include "archivist.service.nodeport.enabled" .) "true" }}
 {{- .Values.replica.count }}
 {{- else }}
 {{- 1 }}
@@ -101,8 +101,8 @@ StatefulSets count.
 {{/*
 Replica count.
 */}}
-{{- define "codex.replica.count" -}}
-{{- if eq (int (include "codex.statefulSetCount" .)) 1 }}
+{{- define "archivist.replica.count" -}}
+{{- if eq (int (include "archivist.statefulSetCount" .)) 1 }}
 {{- .Values.replica.count }}
 {{- else }}
 {{- 1 }}
@@ -112,7 +112,7 @@ Replica count.
 {{/*
 Enable NodePort service.
 */}}
-{{- define "codex.service.nodeport.enabled" -}}
+{{- define "archivist.service.nodeport.enabled" -}}
 {{- if has "nodeport" .Values.service.type }}
 {{- "true" }}
 {{- else }}
@@ -125,8 +125,8 @@ Enable initEnv container.
 For single replica, initEnv container is enabled only if initEnv.enabled is set to true.
 For multiple replicas, initEnv container is enabled if initEnv.enabled or we have multiple StatefulSets with NodePort service enabled.
 */}}
-{{- define "codex.initEnv.enabled" -}}
-{{- if or .Values.initEnv.enabled (eq (include "codex.service.nodeport.enabled" .) "true") }}
+{{- define "archivist.initEnv.enabled" -}}
+{{- if or .Values.initEnv.enabled (eq (include "archivist.service.nodeport.enabled" .) "true") }}
 {{- "true" }}
 {{- else }}
 {{- "false" }}
@@ -134,10 +134,10 @@ For multiple replicas, initEnv container is enabled if initEnv.enabled or we hav
 {{- end }}
 
 {{/*
-Mount CODEX_ETH_PRIVATE_KEY.
+Mount ARCHIVIST_ETH_PRIVATE_KEY.
 */}}
-{{- define "codex.env.ethPrivateKey.mount" -}}
-{{- if .Values.codex.env.CODEX_ETH_PRIVATE_KEY }}
+{{- define "archivist.env.ethPrivateKey.mount" -}}
+{{- if .Values.archivist.env.ARCHIVIST_ETH_PRIVATE_KEY }}
 {{- "true" }}
 {{- else }}
 {{- "false" }}
