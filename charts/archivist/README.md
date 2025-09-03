@@ -1,4 +1,4 @@
-# Codex Helm Chart
+# Archivist Helm Chart
 
  1. [Description](#description)
  2. [Installation](#installation)
@@ -11,9 +11,9 @@
 
 ## Description
 
- Codex is a decentralized data storage platform that provides exceptionally strong censorship resistance and durability guarantees.
+ Archivist is a decentralized data storage platform that provides exceptionally strong censorship resistance and durability guarantees.
 
- Chart will install Codex in Kubernetes and make nodes publicly accessible in the Internet or just for in-cluster testing. For more information please read [Deployment strategies](#deployment-strategies).
+ Chart will install Archivist in Kubernetes and make nodes publicly accessible in the Internet or just for in-cluster testing. For more information please read [Deployment strategies](#deployment-strategies).
 
 
 ## Installation
@@ -22,23 +22,23 @@
 
  1. Create a namespace
     ```shell
-    kubectl create namespace codex-ns
+    kubectl create namespace archivist-ns
     ```
 
  2. Create secrets if we would like to pass sensitive data
 
-    Create `codex-eth-provider` secret, a common one for all Codex instances
+    Create `archivist-eth-provider` secret, a common one for all Archivist instances
     ```shell
     secret='apiVersion: v1
     kind: Secret
     metadata:
-      name: codex-eth-provider
-      namespace: codex-ns
+      name: archivist-eth-provider
+      namespace: archivist-ns
       labels:
-        name: codex
+        name: archivist
     type: Opaque
     stringData:
-      CODEX_ETH_PROVIDER: https://mainnet.infura.io/v3/YOUR-API-KEY
+      ARCHIVIST_ETH_PROVIDER: https://mainnet.infura.io/v3/YOUR-API-KEY
     '
 
     echo $secret | kubectl create -f -
@@ -49,26 +49,26 @@
     docker run --rm gochain/web3 account create
     ```
 
-    Create `codex-eth-private-key` secret, a common one with separate key for each Codex instance
+    Create `archivist-eth-private-key` secret, a common one with separate key for each Archivist instance
     ```shell
     secret='apiVersion: v1
     kind: Secret
     metadata:
-      name: codex-eth-private-key
-      namespace: codex-ns
+      name: archivist-eth-private-key
+      namespace: archivist-ns
       labels:
-        name: codex
+        name: archivist
     type: Opaque
     stringData:
-      CODEX_ETH_PRIVATE_KEY-1-1: 0x...
-      CODEX_ETH_PRIVATE_KEY-2-1: 0x...
+      ARCHIVIST_ETH_PRIVATE_KEY-1-1: 0x...
+      ARCHIVIST_ETH_PRIVATE_KEY-2-1: 0x...
     '
 
     echo $secret | kubectl create -f -
     ```
     > **Note:** Please note, key name should contain Pod index, like `-1-1`, `-2-1` in case of multiple replicas or single replica with `statefulSet.prettify=false` and `-1` in case of single replica.
 
- 3. Create a `codex-api-basic-auth` secret if we would like to expose Codex API via [Ingress NGINX Controller](https://kubernetes.github.io/ingress-nginx/) protected by [basic authentication](https://kubernetes.github.io/ingress-nginx/examples/auth/basic/)
+ 3. Create a `archivist-api-basic-auth` secret if we would like to expose Archivist API via [Ingress NGINX Controller](https://kubernetes.github.io/ingress-nginx/) protected by [basic authentication](https://kubernetes.github.io/ingress-nginx/examples/auth/basic/)
     ```shell
     docker run --rm httpd htpasswd -bnB <username> <password>
     ```
@@ -76,10 +76,10 @@
     secret='apiVersion: v1
     kind: Secret
     metadata:
-      name: codex-api-basic-auth
-      namespace: codex-ns
+      name: archivist-api-basic-auth
+      namespace: archivist-ns
       labels:
-        name: codex-api-basic-auth
+        name: archivist-api-basic-auth
     type: Opaque
     stringData:
       auth: >-
@@ -108,44 +108,44 @@
       rbac:
         create: true
 
-    # Codex
-    codex:
+    # Archivist
+    archivist:
       # In case we would like to pass more than one bootstrap node
       args:
-      - codex
+      - archivist
       - persistence
       - prover
       - --bootstrap-node=spr:xxx
       - --bootstrap-node=spr:yyy
       env:
-        CODEX_LOG_LEVEL: TRACE
-        CODEX_METRICS: true
-        CODEX_METRICS_ADDRESS: 0.0.0.0
-        CODEX_METRICS_PORT: 8008
-        CODEX_DATA_DIR: /data
-        CODEX_API_BINDADDR: 0.0.0.0
-        CODEX_API_PORT: 8080
-        CODEX_STORAGE_QUOTA: 18gb
-        CODEX_BLOCK_TTL: 1d
-        CODEX_BLOCK_MI: 10m
-        CODEX_BLOCK_MN: 1000
+        ARCHIVIST_LOG_LEVEL: TRACE
+        ARCHIVIST_METRICS: true
+        ARCHIVIST_METRICS_ADDRESS: 0.0.0.0
+        ARCHIVIST_METRICS_PORT: 8008
+        ARCHIVIST_DATA_DIR: /data
+        ARCHIVIST_API_BINDADDR: 0.0.0.0
+        ARCHIVIST_API_PORT: 8080
+        ARCHIVIST_STORAGE_QUOTA: 18gb
+        ARCHIVIST_BLOCK_TTL: 1d
+        ARCHIVIST_BLOCK_MI: 10m
+        ARCHIVIST_BLOCK_MN: 1000
         # port values will be set dynamically for each replica, base on data from service.transport
-        CODEX_LISTEN_ADDRS: /ip4/0.0.0.0/tcp/8070
-        CODEX_DISC_IP: 0.0.0.0
+        ARCHIVIST_LISTEN_ADDRS: /ip4/0.0.0.0/tcp/8070
+        ARCHIVIST_DISC_IP: 0.0.0.0
         # port value will be set dynamically for each replica, base on data from service.discovery
-        CODEX_DISC_PORT: 8090
+        ARCHIVIST_DISC_PORT: 8090
         # In case of single SPR, you can set it via var
-        # CODEX_BOOTSTRAP: "spr:xxx"
-        CODEX_MARKETPLACE_ADDRESS: 0x1234567890123456789012345678901234567890
+        # ARCHIVIST_BOOTSTRAP: "spr:xxx"
+        ARCHIVIST_MARKETPLACE_ADDRESS: 0x1234567890123456789012345678901234567890
         # file name will be used as a secret name to be mounted to the specified path
-        # unique key from `codex-eth-private-key` secret will be used to mach the unique Pod name
-        CODEX_ETH_PRIVATE_KEY: /opt/codex-eth-private-key
+        # unique key from `archivist-eth-private-key` secret will be used to mach the unique Pod name
+        ARCHIVIST_ETH_PRIVATE_KEY: /opt/archivist-eth-private-key
       extraEnv:
-        - name: CODEX_ETH_PROVIDER
+        - name: ARCHIVIST_ETH_PROVIDER
           valueFrom:
             secretKeyRef:
-              name: codex-eth-provider
-              key: CODEX_ETH_PROVIDER
+              name: archivist-eth-provider
+              key: ARCHIVIST_ETH_PROVIDER
 
     # Pod ports
     ports:
@@ -198,7 +198,7 @@
         nginx.ingress.kubernetes.io/use-regex: "true"
         nginx.ingress.kubernetes.io/rewrite-target: /$2
         nginx.ingress.kubernetes.io/auth-type: basic
-        nginx.ingress.kubernetes.io/auth-secret: codex-api-basic-auth
+        nginx.ingress.kubernetes.io/auth-secret: archivist-api-basic-auth
         nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - Private Area'
       tls:
         - secretName: api-domain-tld
@@ -222,23 +222,23 @@
     ```
     </details>
 
-    Review and update all settings and pay attention to `codex.env`, `service` and `ingress`. You also may consider to skip the values which [defaults](values.yaml) suit your needs.
+    Review and update all settings and pay attention to `archivist.env`, `service` and `ingress`. You also may consider to skip the values which [defaults](values.yaml) suit your needs.
 
  5. Install helm chart
     ```shell
-    helm install -f values.yaml -n codex-ns codex ./codex
+    helm install -f values.yaml -n archivist-ns archivist ./archivist
     ```
 
- 6. Check that your Codex nodes up and running and accessible via Ingress
+ 6. Check that your Archivist nodes up and running and accessible via Ingress
     ```shell
     # Pods
-    kubectl get pods -n codex-ns
+    kubectl get pods -n archivist-ns
 
     # API
     # storage/node-1
     # storage/node-2
 
-    curl -s -k -u username:password https://api.domain.tld/storage/node-1/api/codex/v1/debug/info | jq -r
+    curl -s -k -u username:password https://api.domain.tld/storage/node-1/api/archivist/v1/debug/info | jq -r
     ```
 
  7. If we need more replicas, we should
@@ -249,13 +249,13 @@
 
 ## Deployment strategies
 
- For P2P communication, Codex require that transport and discovery ports be accessible for direct connection. In that way we may consider two deployment strategies
- - Private - Codex is accessible only inside the Kubernetes cluster
- - Public - Codex is accessible to any nodes in the Internet
+ For P2P communication, Archivist require that transport and discovery ports be accessible for direct connection. In that way we may consider two deployment strategies
+ - Private - Archivist is accessible only inside the Kubernetes cluster
+ - Public - Archivist is accessible to any nodes in the Internet
 
  **Private**
 
- For private deployment, Codex Pods should announce their private IP's and TCP ports. Because every Pod has unique IP, all Pods can use same TCP/UDP ports which will be directly accessible by other Pods.
+ For private deployment, Archivist Pods should announce their private IP's and TCP ports. Because every Pod has unique IP, all Pods can use same TCP/UDP ports which will be directly accessible by other Pods.
 
  [Name resolution](https://github.com/libp2p/specs/blob/master/addressing/README.md#ip-and-name-resolution) is not yet supported and we can't use [headless service](https://kubernetes.io/docs/concepts/services-networking/service/#headless-services) for P2P communications.
 
@@ -263,7 +263,7 @@
 
  **Public**
 
- For Public deployment, Codex Pods should announce Public IP of the Kubernetes workers node on which they are running and TCP/UDP ports should be unique, because [NodePort](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport) is shared across all nodes in the cluster. This leads to some limitation in case we would like to use a single [StatefulSet](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) with replicas > 1, because there is no native way in Kubernetes to assign dynamically Pods TCP/UDP ports per replica.
+ For Public deployment, Archivist Pods should announce Public IP of the Kubernetes workers node on which they are running and TCP/UDP ports should be unique, because [NodePort](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport) is shared across all nodes in the cluster. This leads to some limitation in case we would like to use a single [StatefulSet](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) with replicas > 1, because there is no native way in Kubernetes to assign dynamically Pods TCP/UDP ports per replica.
 
 **Single replica**
  - Single StatefulSet is created and by default with index in the name
@@ -283,28 +283,28 @@
    - A separate `ClusterIP` service is created for every Pod API and Metrics ports
    - `NodePort` service is created for every Pod with unique TCP/UDP ports
    - App configuration is done using `values.yaml` and secrets
-   - Init container `init-env` is used to pass node `ExternalIP` to Codex container
+   - Init container `init-env` is used to pass node `ExternalIP` to Archivist container
 
   Variables, which would be assigned via `init-env` init container will be omitted at StatefulSet level
   ```shell
   # P2P
-  CODEX_NAT=<ExternalIP>
+  ARCHIVIST_NAT=<ExternalIP>
   ```
-  And to check their values, it would be required to look in to `init-env` Pod logs or Codex Pod files located in `/opt/env` folder
+  And to check their values, it would be required to look in to `init-env` Pod logs or Archivist Pod files located in `/opt/env` folder
   ```shell
   # init-env container
-  kubectl logs -n codex -c init-env codex-1-1
+  kubectl logs -n archivist -c init-env archivist-1-1
 
-  # Codex container
-  kubectl exec -it -n codex-ns -c codex codex-1-1 -- bash -c "cat /opt/env/*"
+  # Archivist container
+  kubectl exec -it -n archivist-ns -c archivist archivist-1-1 -- bash -c "cat /opt/env/*"
   ```
 
   Unique data is passed via ConfigMap/Secrets
   ```shell
   # ConfigMap/Secrets
-  CODEX_ETH_PROVIDER=<https://mainnet.infura.io/v3/...>
-  CODEX_ETH_PRIVATE_KEY=<0x...>
-  CODEX_MARKETPLACE_ADDRESS=<0x...>
+  ARCHIVIST_ETH_PROVIDER=<https://mainnet.infura.io/v3/...>
+  ARCHIVIST_ETH_PRIVATE_KEY=<0x...>
+  ARCHIVIST_MARKETPLACE_ADDRESS=<0x...>
   ```
   And we can use a single secrets with unique keys per Pod or multiple secrets with unique name per Pod and refer to the Pod by `-replica_index-pod_index`. This string should be added to the `values.yaml` and will be replaced by Helm with the Pod index. Please see [Installation](#installation) for an example.
 
@@ -314,7 +314,7 @@
 ### Knows issues
  1. We can deploy just one replica per installation in case of `NodePort`, because
     - In Kubernetes, we can't set different settings for replicas in StatefulSet
-    - Even if we can workaround that by passing environment variables via `init-env` container, Pods ports, in the manifest, also should be unique because Codex has `--listen-addrs` and `--disc-port` for P2P communication and they should be same as `NodePort` and unique for every Pod
+    - Even if we can workaround that by passing environment variables via `init-env` container, Pods ports, in the manifest, also should be unique because Archivist has `--listen-addrs` and `--disc-port` for P2P communication and they should be same as `NodePort` and unique for every Pod
 
     We can workaround that by passing unique TCP/UDP ports using init container and port forwarder sidecar and we will consider to implement that later.
 
@@ -324,20 +324,20 @@
 
  2. When we deploy multiple nodes using single installation, multiple StatefulSets will be created. During release upgrade all of them will be upgraded/restarted almost simultaneously.
 
- 3. Codex erasure codding is working on the main app thread and it results of the failed liveness/readiness probes. This is why we have big values by default for these probes.
+ 3. Archivist erasure codding is working on the main app thread and it results of the failed liveness/readiness probes. This is why we have big values by default for these probes.
 
 
 ### Prettify
 
  Because we are forced to deploy multiple StatefulSets with unique settings, we add a replica index to their names. As a result we will get names which contains additionally Pod index and this is why we've introduced `prettify` key to the StatefulSet, Service and Ingress and `ordinalsStart` for StatefulSet which affect how these names will looks like.
 
-| Object      | Accept `prettify`  | Single                | Single, `prettify` | Multiple                                       | Multiple, `prettify`                       | Single --> Multiple               |
-| ----------- | ------------------ | --------------------- | ------------------ | ---------------------------------------------- | ------------------------------------------ | --------------------------------- |
-| StatefulSet | :white_check_mark: | `codex-1`             | `codex`            | `codex-1`<br>`codex-2`                         | `codex-1`<br>`codex-2`                     | Destructive in case of `prettify` |
-| Pod         | :x:                | `codex-1-1`           | `codex-1`          | `codex-1-1` <br> `codex-2-1`                   | `codex-1-1` <br> `codex-2-1`               | Destructive in case of `prettify` |
-| PVC         | :x:                | `data-codex-1-1`      | `data-codex-1`     | `data-codex-1-1` <br> `data-codex-2-1`         | `data-codex-1-1` <br> `data-codex-2-1`     | Destructive in case of `prettify` |
-| Service     | :white_check_mark: | `codex-1-1-nodeport`  | `codex-nodeport`   | `codex-1-1-nodeport` <br> `codex-2-1-nodeport` | `codex-1-nodeport` <br> `codex-2-nodeport` | Non destructive                   |
-| Ingress     | :white_check_mark: | `/codex-1-1`          | `/codex`           | `/codex-1-1` <br> `/codex-2-1`                 | `/codex-1` <br> `/codex-2`                 | Non destructive                   |
+| Object      | Accept `prettify`  | Single                    | Single, `prettify`     | Multiple                                       | Multiple, `prettify`                                       | Single --> Multiple               |
+| ----------- | ------------------ | ------------------------- | ---------------------- | ---------------------------------------------- | ---------------------------------------------------------- | --------------------------------- |
+| StatefulSet | :white_check_mark: | `archivist-1`             | `archivist`            | `archivist-1`<br>`archivist-2`                         | `archivist-1`<br>`archivist-2`                     | Destructive in case of `prettify` |
+| Pod         | :x:                | `archivist-1-1`           | `archivist-1`          | `archivist-1-1` <br> `archivist-2-1`                   | `archivist-1-1` <br> `archivist-2-1`               | Destructive in case of `prettify` |
+| PVC         | :x:                | `data-archivist-1-1`      | `data-archivist-1`     | `data-archivist-1-1` <br> `data-archivist-2-1`         | `data-archivist-1-1` <br> `data-archivist-2-1`     | Destructive in case of `prettify` |
+| Service     | :white_check_mark: | `archivist-1-1-nodeport`  | `archivist-nodeport`   | `archivist-1-1-nodeport` <br> `archivist-2-1-nodeport` | `archivist-1-nodeport` <br> `archivist-2-nodeport` | Non destructive                   |
+| Ingress     | :white_check_mark: | `/archivist-1-1`          | `/archivist`           | `/archivist-1-1` <br> `/archivist-2-1`                 | `/archivist-1` <br> `/archivist-2`                 | Non destructive                   |
 
 
 The idea is to make endpoint appropriate to the StatefulSet name by removing Pod index in case of multiple StatefulSets.
@@ -349,17 +349,17 @@ For StatefulSet, `prettify=false` by default, in order to be able to add more re
 
 ```shell
 # Render chart templates
-helm template codex-bootstrap codex -n codex-ns --debug
+helm template archivist-bootstrap archivist -n archivist-ns --debug
 
 # Specific template
-helm template codex-bootstrap codex -n codex-ns --debug -s templates/service.yaml
+helm template archivist-bootstrap archivist -n archivist-ns --debug -s templates/service.yaml
 
 # Examine a chart for possible issues
-helm lint codex
+helm lint archivist
 
 # Check the manifest
-helm install codex --dry-run codex --namespace codex-ns
-helm install codex --dry-run=server codex --namespace codex-ns
+helm install archivist --dry-run archivist --namespace archivist-ns
+helm install archivist --dry-run=server archivist --namespace archivist-ns
 ```
 
 

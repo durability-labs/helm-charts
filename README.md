@@ -1,3 +1,3 @@
-# Codex Helm charts
+# Archivist Helm charts
 
- Official Helm charts for Codex.
+ Official Helm charts for Archivist.

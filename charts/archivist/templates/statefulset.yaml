@@ -1,26 +1,26 @@
-{{- range $replica_index := until (int (include "codex.statefulSetCount" .)) }}
+{{- range $replica_index := until (int (include "archivist.statefulSetCount" .)) }}
 {{- with $ }}
 {{- $replica_suffix := ternary "" (print "-" (add $replica_index .Values.statefulSet.ordinalsStart)) (and (eq (int .Values.replica.count) 1) .Values.statefulSet.prettify) }}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ print (include "codex.fullname" .) $replica_suffix }}
-  namespace: {{ include "codex.namespace" . }}
-  labels: {{ include "codex.labels" . | nindent 4 }}
+  name: {{ print (include "archivist.fullname" .) $replica_suffix }}
+  namespace: {{ include "archivist.namespace" . }}
+  labels: {{ include "archivist.labels" . | nindent 4 }}
   annotations:
-    meta.helm.sh/release-name: {{ include "codex.fullname" . }}
-    meta.helm.sh/release-namespace: {{ include "codex.namespace" . }}
+    meta.helm.sh/release-name: {{ include "archivist.fullname" . }}
+    meta.helm.sh/release-namespace: {{ include "archivist.namespace" . }}
     {{- with .Values.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  replicas: {{ include "codex.replica.count" . }}
+  replicas: {{ include "archivist.replica.count" . }}
   ordinals:
     start: {{ .Values.statefulSet.ordinalsStart }}
   selector:
     matchLabels:
-      {{- include "codex.selectorLabels" . | nindent 6 }}
+      {{- include "archivist.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -28,7 +28,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "codex.labels" . | nindent 8 }}
+        {{- include "archivist.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -37,14 +37,14 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "codex.serviceAccountName" . }}
+      serviceAccountName: {{ include "archivist.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
         {{- range .Values.initContainers }}
         - {{ tpl (toYaml .) $ | nindent 10 | trim }}
         {{- end }}
-        {{- if eq (include "codex.initEnv.enabled" .) "true" }}
+        {{- if eq (include "archivist.initEnv.enabled" .) "true" }}
         - name: init-env
           image: {{ print .Values.initEnv.image.repository ":" .Values.initEnv.image.tag }}
           imagePullPolicy: {{ .Values.initEnv.image.pullPolicy }}
@@ -66,8 +66,8 @@ spec:
               {{- if ne .Values.initEnv.command "" }}
               {{- .Values.initEnv.command | toYaml | nindent 14 }}
               {{- else }}
-              CODEX_NAT=$(kubectl get nodes ${NODE_NAME} -o jsonpath='{.status.addresses[?(@.type=="ExternalIP")].address}');
-              echo "CODEX_NAT=extip:${CODEX_NAT}" >> ${NODEPORT_FILE};
+              ARCHIVIST_NAT=$(kubectl get nodes ${NODE_NAME} -o jsonpath='{.status.addresses[?(@.type=="ExternalIP")].address}');
+              echo "ARCHIVIST_NAT=extip:${ARCHIVIST_NAT}" >> ${NODEPORT_FILE};
               cat ${NODEPORT_FILE};
               {{- end }}
           volumeMounts:
@@ -84,7 +84,7 @@ spec:
           lifecycle:
             {{- if .Values.lifecycle }}
             {{- toYaml .Values.lifecycle | nindent 12 }}
-            {{- else if .Values.codex.marketplace }}
+            {{- else if .Values.archivist.marketplace }}
             postStart:
               exec:
                 command:
@@ -94,48 +94,48 @@ spec:
                       sleep 10
 
                       while true; do
-                        curl --max-time 2 http://localhost:{{ .Values.ports.api.containerPort}}/api/codex/v1/debug/info && break
+                        curl --max-time 2 http://localhost:{{ .Values.ports.api.containerPort}}/api/archivist/v1/debug/info && break
                         sleep 10
                       done
 
-                      availability=$(curl http://localhost:{{ .Values.ports.api.containerPort}}/api/codex/v1/sales/availability | jq -r '.[]')
+                      availability=$(curl http://localhost:{{ .Values.ports.api.containerPort}}/api/archivist/v1/sales/availability | jq -r '.[]')
 
                       if [[ -z "${availability}" ]]; then
-                      availability=$(curl http://localhost:{{ .Values.ports.api.containerPort}}/api/codex/v1/sales/availability \
+                      availability=$(curl http://localhost:{{ .Values.ports.api.containerPort}}/api/archivist/v1/sales/availability \
                         --max-time 2 \
                         --request POST \
                         --header 'Content-Type: application/json' \
                         --data '{
-                          "totalSize": "{{ .Values.codex.marketplace.totalSize }}",
-                          "duration": "{{ .Values.codex.marketplace.duration }}",
-                          "minPricePerBytePerSecond": "{{ .Values.codex.marketplace.minPricePerBytePerSecond }}",
-                          "totalCollateral": "{{ .Values.codex.marketplace.totalCollateral }}"
+                          "totalSize": "{{ .Values.archivist.marketplace.totalSize }}",
+                          "duration": "{{ .Values.archivist.marketplace.duration }}",
+                          "minPricePerBytePerSecond": "{{ .Values.archivist.marketplace.minPricePerBytePerSecond }}",
+                          "totalCollateral": "{{ .Values.archivist.marketplace.totalCollateral }}"
                         }')
                         echo -e "Storage availability was configured \n${availability}" >/opt/storage-availability
                       else
                         echo -e "Storage availability already configured \n${availability}" >/opt/storage-availability
                       fi
             {{- end }}
-          {{- if .Values.codex.command }}
+          {{- if .Values.archivist.command }}
           command:
-            {{- toYaml .Values.codex.command | nindent 12 }}
+            {{- toYaml .Values.archivist.command | nindent 12 }}
             {{- end }}
-          {{- if .Values.codex.args }}
+          {{- if .Values.archivist.args }}
           args:
-            {{- toYaml .Values.codex.args | nindent 12 }}
+            {{- toYaml .Values.archivist.args | nindent 12 }}
           {{- end }}
 
           env:
-            {{- if eq (include "codex.initEnv.enabled" .) "true" }}
+            {{- if eq (include "archivist.initEnv.enabled" .) "true" }}
             - name: ENV_PATH
               value: "{{ .Values.initEnv.envPath }}"
             {{- end }}
-            {{- range $name, $value := .Values.codex.env }}
-              {{- if and (include "codex.service.nodeport.enabled" $) (eq $name "CODEX_DISC_PORT") }}
+            {{- range $name, $value := .Values.archivist.env }}
+              {{- if and (include "archivist.service.nodeport.enabled" $) (eq $name "ARCHIVIST_DISC_PORT") }}
               {{- $discovery_port_replica := add $.Values.service.discovery.nodePort (mul $replica_index $.Values.service.discovery.nodePortOffset) }}
             - name: {{ $name }}
               value: {{ $discovery_port_replica | quote }}
-              {{- else if and (include "codex.service.nodeport.enabled" $) (eq $name "CODEX_LISTEN_ADDRS") }}
+              {{- else if and (include "archivist.service.nodeport.enabled" $) (eq $name "ARCHIVIST_LISTEN_ADDRS") }}
               {{- $transport_port := splitList "/" $value | last }}
               {{- $transport_port_replica := add $.Values.service.transport.nodePort (mul $replica_index $.Values.service.discovery.nodePortOffset) }}
               {{- $lister_addrs := $value | replace (toString $transport_port) (toString $transport_port_replica) }}
@@ -146,7 +146,7 @@ spec:
               value: {{ $value | quote }}
               {{- end }}
             {{- end }}
-            {{- range .Values.codex.extraEnv }}
+            {{- range .Values.archivist.extraEnv }}
             - {{ toYaml . | replace "replica_index" (toString (add $replica_index $.Values.statefulSet.ordinalsStart)) | replace "pod_index" (toString $.Values.statefulSet.ordinalsStart) | nindent 14 | trim }}
             {{- end }}
 
@@ -163,12 +163,12 @@ spec:
             {{- end }}
             {{- if .Values.ports.transport }}
             - name: {{ .Values.ports.transport.name }}
-              containerPort: {{ if include "codex.service.nodeport.enabled" . }}{{- add .Values.service.transport.nodePort (mul $replica_index .Values.service.transport.nodePortOffset) -}}{{ end }}
+              containerPort: {{ if include "archivist.service.nodeport.enabled" . }}{{- add .Values.service.transport.nodePort (mul $replica_index .Values.service.transport.nodePortOffset) -}}{{ end }}
               protocol: TCP
             {{- end }}
             {{- if .Values.ports.discovery }}
             - name: {{ .Values.ports.discovery.name }}
-              containerPort: {{ if include "codex.service.nodeport.enabled" . }}{{- add .Values.service.discovery.nodePort (mul $replica_index .Values.service.discovery.nodePortOffset) -}}{{ end }}
+              containerPort: {{ if include "archivist.service.nodeport.enabled" . }}{{- add .Values.service.discovery.nodePort (mul $replica_index .Values.service.discovery.nodePortOffset) -}}{{ end }}
               protocol: UDP
             {{- end }}
             {{- with .Values.extraContainerPorts }}
@@ -192,18 +192,18 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
 
           volumeMounts:
-            {{- if eq (include "codex.initEnv.enabled" .) "true" }}
+            {{- if eq (include "archivist.initEnv.enabled" .) "true" }}
             - name: env-nodeport
               mountPath: {{ .Values.initEnv.envPath }}
             {{- end }}
-            {{- if include "codex.env.ethPrivateKey.mount" . }}
-            - name: codex-eth-private-key
-              mountPath: {{ .Values.codex.env.CODEX_ETH_PRIVATE_KEY }}
-              subPath: codex-eth-private-key
+            {{- if include "archivist.env.ethPrivateKey.mount" . }}
+            - name: archivist-eth-private-key
+              mountPath: {{ .Values.archivist.env.ARCHIVIST_ETH_PRIVATE_KEY }}
+              subPath: archivist-eth-private-key
             {{- end }}
             {{- if .Values.persistence.enabled }}
             - name: {{ .Values.persistence.name }}
-              mountPath: {{ .Values.codex.env.CODEX_DATA_DIR }}
+              mountPath: {{ .Values.archivist.env.ARCHIVIST_DATA_DIR }}
             {{ else if .Values.persistence.exis}}
             - name: {{ .Values.persistence.name }}
               emptyDir: {}
@@ -232,17 +232,17 @@ spec:
     {{- end }}
 
       volumes:
-        {{- if eq (include "codex.initEnv.enabled" .) "true" }}
+        {{- if eq (include "archivist.initEnv.enabled" .) "true" }}
         - name: env-nodeport
           emptyDir: {}
         {{- end }}
-        {{- if eq (include "codex.env.ethPrivateKey.mount" .) "true" }}
-        - name: codex-eth-private-key
+        {{- if eq (include "archivist.env.ethPrivateKey.mount" .) "true" }}
+        - name: archivist-eth-private-key
           secret:
-            secretName: {{ .Values.codex.env.CODEX_ETH_PRIVATE_KEY | splitList "/" | last }}
+            secretName: {{ .Values.archivist.env.ARCHIVIST_ETH_PRIVATE_KEY | splitList "/" | last }}
             items:
-              - key: {{ print "CODEX_ETH_PRIVATE_KEY" $replica_suffix "-1" }}
-                path: codex-eth-private-key
+              - key: {{ print "ARCHIVIST_ETH_PRIVATE_KEY" $replica_suffix "-1" }}
+                path: archivist-eth-private-key
             defaultMode: 384
         {{- end }}
 

@@ -3,15 +3,15 @@
 {{- with $ }}
 {{- $pod_replica_suffix := ternary "" (print "-" (add $replica_index .Values.statefulSet.ordinalsStart)) (and (eq (int .Values.replica.count) 1) .Values.statefulSet.prettify) }}
 {{- $pod_suffix := print "-" .Values.statefulSet.ordinalsStart -}}
-{{- $pod_name := print (include "codex.fullname" .) $pod_replica_suffix $pod_suffix }}
-{{- $service_name := print (include "codex.fullname" .) $pod_replica_suffix (ternary ($pod_suffix) "" (eq (toString .Values.service.prettify) "false")) "-" $type }}
+{{- $pod_name := print (include "archivist.fullname" .) $pod_replica_suffix $pod_suffix }}
+{{- $service_name := print (include "archivist.fullname" .) $pod_replica_suffix (ternary ($pod_suffix) "" (eq (toString .Values.service.prettify) "false")) "-" $type }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ $service_name }}
   labels:
-    {{- include "codex.labels" . | nindent 4 }}
+    {{- include "archivist.labels" . | nindent 4 }}
     pod: {{ $pod_name }}
 spec:
   {{- if eq $type "nodeport" }}
@@ -44,7 +44,7 @@ spec:
     {{- /*
     Transport port
     */ -}}
-    {{- if or (eq $type "nodeport") (eq (include "codex.service.nodeport.enabled" .) "false") }}
+    {{- if or (eq $type "nodeport") (eq (include "archivist.service.nodeport.enabled" .) "false") }}
     {{- if and .Values.service.transport.enabled }}
     {{- $node_port_transport := add .Values.service.transport.nodePort (mul $replica_index .Values.service.transport.nodePortOffset) }}
     - port: {{ $node_port_transport }}
@@ -73,7 +73,7 @@ spec:
     {{- toYaml .Values.extraPorts | nindent 4 }}
     {{- end }}
   selector:
-    {{- include "codex.selectorLabels" . | nindent 4 }}
+    {{- include "archivist.selectorLabels" . | nindent 4 }}
     statefulset.kubernetes.io/pod-name: {{ $pod_name }}
 {{- end }}
 {{- end }}
