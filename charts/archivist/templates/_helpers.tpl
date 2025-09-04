@@ -137,7 +137,7 @@ For multiple replicas, initEnv container is enabled if initEnv.enabled or we hav
 Mount ARCHIVIST_ETH_PRIVATE_KEY.
 */}}
 {{- define "archivist.env.ethPrivateKey.mount" -}}
-{{- if .Values.archivist.env.ARCHIVIST_ETH_PRIVATE_KEY }}
+{{- if and (has "persistence" .Values.archivist.args) .Values.archivist.env.ARCHIVIST_ETH_PRIVATE_KEY }}
 {{- "true" }}
 {{- else }}
 {{- "false" }}

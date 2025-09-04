@@ -196,7 +196,7 @@ spec:
             - name: env-nodeport
               mountPath: {{ .Values.initEnv.envPath }}
             {{- end }}
-            {{- if include "archivist.env.ethPrivateKey.mount" . }}
+            {{- if eq (include "archivist.env.ethPrivateKey.mount" .) "true" }}
             - name: archivist-eth-private-key
               mountPath: {{ .Values.archivist.env.ARCHIVIST_ETH_PRIVATE_KEY }}
               subPath: archivist-eth-private-key
