@@ -114,6 +114,8 @@ archivist:
   args:
   # known as Docker CMD
   # - archivist
+  # - persistence
+  # - prover
   # - --bootstrap-node=spr:xxx
   # - --bootstrap-node=spr:yyy
   # - --data-dir=/data
