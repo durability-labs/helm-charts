@@ -118,7 +118,8 @@ archivist:
   # - --bootstrap-node=spr:yyy
   # - --data-dir=/data
   #
-  # Archivist configuration using environment variables
+
+  # -- Archivist configuration using environment variables
   env:
     # Logging
     ARCHIVIST_LOG_LEVEL: INFO
@@ -162,22 +163,11 @@ archivist:
     # ARCHIVIST_ETH_PRIVATE_KEY: /opt/archivist-eth-private-key
     # ARCHIVIST_MARKETPLACE_ADDRESS: 0x1234567890123456789012345678901234567890
 
-  extraEnv:
-    - name: ARCHIVIST_ETH_PROVIDER
-      valueFrom:
-        secretKeyRef:
-          name: archivist-eth-provider
-          key: ARCHIVIST_ETH_PROVIDER
-    - name: ARCHIVIST_ETH_ACCOUNT
-      valueFrom:
-        secretKeyRef:
-          name: archivist_eth_account
-          key: ARCHIVIST_ETH_ACCOUNT_replica_index_pod_index
-
-  # Extra environment variables
+  # -- Extra environment variables
+  extraEnv: {}
   # extraEnv:
     # When multiple StatefulSets are created, we can use replica_index to pass different ConfigMap/Secrets to each replica
-    #      Value                                                    Secrets
+    # Value                                             Secrets
     # archivist_eth_account_replica_index-pod_index --> archivist_eth_account_1_1, archivist_eth_account_2_1, archivist_eth_account_3_1, ...
     #
     # - name: FOO
