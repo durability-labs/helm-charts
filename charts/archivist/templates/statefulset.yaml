@@ -84,7 +84,7 @@ spec:
           lifecycle:
             {{- if .Values.lifecycle }}
             {{- toYaml .Values.lifecycle | nindent 12 }}
-            {{- else if .Values.archivist.marketplace }}
+            {{- else if and (has "persistence" .Values.archivist.args) .Values.archivist.marketplace }}
             postStart:
               exec:
                 command:
