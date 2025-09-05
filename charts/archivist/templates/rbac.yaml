@@ -1,4 +1,5 @@
-{{- if .Values.serviceAccount.create -}}
+# ServiceAccount
+{{- if eq (include "archivist.serviceAccount.create" .) "true" }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -11,35 +12,37 @@ metadata:
   {{- end }}
 automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
 
-{{- if and .Values.serviceAccount.rbac.create }}
-
-{{- if  .Values.serviceAccount.rbac.rules }}
+# RoleBinding
+{{- if eq (include "archivist.serviceAccount.rbac.create" .) "true" -}}
+{{- if .Values.serviceAccount.rbac.rules }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "archivist.role.name" . }}
+  name: {{ include "archivist.initEnv.role.name" . }}
   labels:
     {{- include "archivist.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "archivist.role.name" . }}
+  name: {{ include "archivist.initEnv.role.name" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "archivist.serviceAccountName" . }}
+  name: {{ include "archivist.initEnv.serviceAccountName" . }}
 
+# Role
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "archivist.role.name" . }}
+  name: {{ include "archivist.initEnv.role.name" . }}
   labels:
     {{- include "archivist.labels" . | nindent 4 }}
 rules:
 {{ toYaml .Values.serviceAccount.rbac.rules | indent 0 }}
 {{- end }}
 
+# ClusterRole
 {{- if .Values.serviceAccount.rbac.clusterRules }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -51,6 +54,7 @@ metadata:
 rules:
 {{ toYaml .Values.serviceAccount.rbac.clusterRules | indent 0 }}
 
+# ClusterRoleBinding
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

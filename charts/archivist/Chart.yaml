@@ -1,6 +1,6 @@
 apiVersion: v2
 name: archivist
-description: Archivist is a decentralized durability engine that allows persisting data in p2p networks
+description: Archivist is a decentralized durability engine that allows persisting data in P2P networks
 type: application
 
 keywords:
