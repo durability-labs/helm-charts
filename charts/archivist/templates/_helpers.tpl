@@ -69,7 +69,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use.
 */}}
 {{- define "archivist.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
+{{- if eq (include "archivist.serviceAccount.create" .) "true" -}}
 {{- default (include "archivist.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
@@ -122,11 +122,31 @@ Enable NodePort service.
 
 {{/*
 Enable initEnv container.
-For single replica, initEnv container is enabled only if initEnv.enabled is set to true.
-For multiple replicas, initEnv container is enabled if initEnv.enabled or we have multiple StatefulSets with NodePort service enabled.
 */}}
 {{- define "archivist.initEnv.enabled" -}}
-{{- if or .Values.initEnv.enabled (eq (include "archivist.service.nodeport.enabled" .) "true") }}
+{{- if .Values.initEnv.enabled }}
+{{- "true" }}
+{{- else }}
+{{- "false" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create ServiceAccount.
+*/}}
+{{- define "archivist.serviceAccount.create" -}}
+{{- if and (eq (include "archivist.initEnv.enabled" .) "true") .Values.serviceAccount.create }}
+{{- "true" }}
+{{- else }}
+{{- "false" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create RBAC resources.
+*/}}
+{{- define "archivist.serviceAccount.rbac.create" -}}
+{{- if and (eq (include "archivist.serviceAccount.create" .) "true") .Values.serviceAccount.rbac.create -}}
 {{- "true" }}
 {{- else }}
 {{- "false" }}

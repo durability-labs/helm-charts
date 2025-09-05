@@ -31,7 +31,7 @@ image:
   # Image repository
   repository: durabilitylabs/archivist-node
   # Image tag
-  tag: latest
+  tag: stable
   # Image pull policy
   pullPolicy: IfNotPresent
 
@@ -55,7 +55,7 @@ annotations: {}
 # ServiceAccount is required for init-env container to get node External IP
 serviceAccount:
   # Specifies whether a service account should be created
-  create: true
+  create: false
   # Automatically mount a ServiceAccount's API credentials?
   automount: true
   # Annotations to add to the service account
@@ -142,6 +142,8 @@ archivist:
     # or use NETWORK="testnet" helper variable, and set it based on the network name, which will set BOOTSTRAP_NODE_FROM_URL
     # ARCHIVIST_BOOTSTRAP: ""
     # ARCHIVIST_NAT: "127.0.0.1"
+    # Use a helper variable to set external IP using lookup service
+    NAT_PUBLIC_IP_AUTO: https://ip.archivist.storage
     ARCHIVIST_LISTEN_ADDRS: /ip4/0.0.0.0/tcp/8070
     ARCHIVIST_DISC_IP: 0.0.0.0
     ARCHIVIST_DISC_PORT: 8090

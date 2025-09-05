@@ -3,6 +3,9 @@
  1. [Description](#description)
  2. [Installation](#installation)
  3. [Deployment strategies](#deployment-strategies)
+     - [Private deployment](#private-deployment)
+     - [Public deployment](#public-deployment)
+     - [Replica count](#replica-count)
      - [Knows issues](#knows-issues)
      - [Prettify](#prettify)
  4. [Development](#development)
@@ -91,7 +94,7 @@
 
  4. Refer to the created secrets in the `values.yaml`
     <details>
-    <summary>values.yaml</summary>
+    <summary><code>values.yaml</code></summary>
 
     ```yaml
     # Replica
@@ -253,7 +256,8 @@
  - Private - Archivist is accessible only inside the Kubernetes cluster
  - Public - Archivist is accessible to any nodes in the Internet
 
- **Private**
+
+### Private deployment
 
  For private deployment, Archivist Pods should announce their private IP's and TCP ports. Because every Pod has unique IP, all Pods can use same TCP/UDP ports which will be directly accessible by other Pods.
 
@@ -261,17 +265,28 @@
 
  This type of deployment is mostly useful for in-cluster testing.
 
- **Public**
+ Deployment is considered **Private** when `service.type = [service]`
+
+
+### Public deployment
 
  For Public deployment, Archivist Pods should announce Public IP of the Kubernetes workers node on which they are running and TCP/UDP ports should be unique, because [NodePort](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport) is shared across all nodes in the cluster. This leads to some limitation in case we would like to use a single [StatefulSet](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) with replicas > 1, because there is no native way in Kubernetes to assign dynamically Pods TCP/UDP ports per replica.
 
-**Single replica**
+ Deployment is considered **Public** when `service.type = [service, nodeport]`
+
+
+### Replica count
+
+#### Single replica
+
  - Single StatefulSet is created and by default with index in the name
  - `ClusterIP` service is used for API and Metrics ports
  - In case of the **Public deployment** type, additionally, `NodePort` service will be created
  - App configuration is done only using `values.yaml` and secrets
 
-**Multiple replicas**
+
+#### Multiple replicas
+
  - **Private deployment**
    - Multiple StatefulSets are created to set unique TCP/UDP Pods ports
    - A separate `ClusterIP` service is created for every Pod API and Metrics ports
@@ -283,48 +298,22 @@
    - A separate `ClusterIP` service is created for every Pod API and Metrics ports
    - `NodePort` service is created for every Pod with unique TCP/UDP ports
    - App configuration is done using `values.yaml` and secrets
-   - Init container `init-env` is used to pass node `ExternalIP` to Archivist container
-
-  Variables, which would be assigned via `init-env` init container will be omitted at StatefulSet level
-  ```shell
-  # P2P
-  ARCHIVIST_NAT=<ExternalIP>
-  ```
-  And to check their values, it would be required to look in to `init-env` Pod logs or Archivist Pod files located in `/opt/env` folder
-  ```shell
-  # init-env container
-  kubectl logs -n archivist -c init-env archivist-1-1
-
-  # Archivist container
-  kubectl exec -it -n archivist-ns -c archivist archivist-1-1 -- bash -c "cat /opt/env/*"
-  ```
-
-  Unique data is passed via ConfigMap/Secrets
-  ```shell
-  # ConfigMap/Secrets
-  ARCHIVIST_ETH_PROVIDER=<https://mainnet.infura.io/v3/...>
-  ARCHIVIST_ETH_PRIVATE_KEY=<0x...>
-  ARCHIVIST_MARKETPLACE_ADDRESS=<0x...>
-  ```
-  And we can use a single secrets with unique keys per Pod or multiple secrets with unique name per Pod and refer to the Pod by `-replica_index-pod_index`. This string should be added to the `values.yaml` and will be replaced by Helm with the Pod index. Please see [Installation](#installation) for an example.
-
-> **Note:** Keep in mind, we do not have configuration option to define **Private**/**Public deployment** type and it is defined by the service type we use - `service = private` / `service + nodeport = public`.
 
 
 ### Knows issues
  1. We can deploy just one replica per installation in case of `NodePort`, because
     - In Kubernetes, we can't set different settings for replicas in StatefulSet
-    - Even if we can workaround that by passing environment variables via `init-env` container, Pods ports, in the manifest, also should be unique because Archivist has `--listen-addrs` and `--disc-port` for P2P communication and they should be same as `NodePort` and unique for every Pod
+    - Even if we can workaround that by passing environment variables via `init-env` init container, Pods ports, in the manifest, also should be unique because Archivist has `--listen-addrs` and `--disc-port` for P2P communication and they should be same as `NodePort` and unique for every Pod
 
-    We can workaround that by passing unique TCP/UDP ports using init container and port forwarder sidecar and we will consider to implement that later.
+    We can workaround that by passing unique TCP/UDP ports using `init-env` init container and port forwarder sidecar and we will consider to implement that later.
 
-    Even if we can use a single StatefulSet for **Private deployment** with `init-env` container to pass unique sensitive data, it was decided to follow same approach as we use for **Public** one. We may consider to change that later.
+    Even if we can use a single StatefulSet for **Private deployment** with `init-env` init container to pass unique sensitive data, it was decided to follow same approach as we use for **Public** one. We may consider to change that later.
 
     This is why, for now, we have an option `replica.count` to generate multiple StatefulSets with unique settings.
 
  2. When we deploy multiple nodes using single installation, multiple StatefulSets will be created. During release upgrade all of them will be upgraded/restarted almost simultaneously.
 
- 3. Archivist erasure codding is working on the main app thread and it results of the failed liveness/readiness probes. This is why we have big values by default for these probes.
+ 3. Archivist erasure codding is working on the main app thread and it results of the failed liveness/readiness probes. This is why we have high values by default for these probes.
 
 
 ### Prettify
@@ -342,7 +331,7 @@
 
 The idea is to make endpoint appropriate to the StatefulSet name by removing Pod index in case of multiple StatefulSets.
 
-For StatefulSet, `prettify=false` by default, in order to be able to add more replicas without destroying the fist one. With that value, a replica index will be added to the the StatefulSet, even if `replica=1`. If you would like to run just a single replica and have a name without that index, you should set `statefulSet.prettify=false`.
+For StatefulSet, `prettify=false` by default, in order to be able to add more replicas without destroying the fist one, when just one is deployed initially. With that value, a replica index will be added to the the StatefulSet, even if `replica=1`. If you would like to run just a single replica and have a name without that index, you should set `statefulSet.prettify=true`.
 
 
 ## Development
@@ -350,6 +339,9 @@ For StatefulSet, `prettify=false` by default, in order to be able to add more re
 ```shell
 # Render chart templates
 helm template archivist-bootstrap archivist -n archivist-ns --debug
+
+# Pass values
+helm template archivist-bootstrap archivist -n archivist-ns --debug --set replica.count=3
 
 # Specific template
 helm template archivist-bootstrap archivist -n archivist-ns --debug -s templates/service.yaml
@@ -365,7 +357,7 @@ helm install archivist --dry-run=server archivist --namespace archivist-ns
 
 ## To do
  1. Make code more reusable.
- 2. Check options to deploy a separate Bootstrap node and get its SPR automatically and pass it to Storage nodes, to setup a local fully working environment.
- 3. Consider to use a single StatefulSet for **Private deployment** with the help of `init-env`.
- 4. Consider to add a port forwarder as a sidecar to implement single StatefulSet configuration with the help of `init-env` for **Public deployment**.
+ 2. Check options to deploy a separate bootstrap node and get its SPR automatically and pass it to Storage nodes, to setup an in-cluster fully working environment.
+ 3. Consider to use a single StatefulSet for **Private deployment** with the help of `init-env` init container.
+ 4. Consider to add a port forwarder as a sidecar to implement single StatefulSet configuration with the help of `init-env` init container for **Public deployment**.
  5. Consider to add an option to use Deployment instead of StatefulSet.
