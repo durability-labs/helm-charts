@@ -157,7 +157,7 @@ Create RBAC resources.
 Mount ARCHIVIST_ETH_PRIVATE_KEY.
 */}}
 {{- define "archivist.env.ethPrivateKey.mount" -}}
-{{- if and (has "persistence" .Values.archivist.args) .Values.archivist.env.ARCHIVIST_ETH_PRIVATE_KEY }}
+{{- if and .Values.archivist.env.ARCHIVIST_PERSISTENCE .Values.archivist.env.ARCHIVIST_ETH_PRIVATE_KEY }}
 {{- "true" }}
 {{- else }}
 {{- "false" }}

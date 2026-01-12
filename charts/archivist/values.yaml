@@ -114,12 +114,9 @@ archivist:
   args:
   # known as Docker CMD
   # - archivist
-  # - persistence
-  # - prover
   # - --bootstrap-node=spr:xxx
   # - --bootstrap-node=spr:yyy
   # - --data-dir=/data
-  #
 
   # -- Archivist configuration using environment variables
   env:
@@ -160,12 +157,15 @@ archivist:
     # ARCHIVIST_BLOCK_MN: 1000
     #
     # Persistence
-    # ARCHIVIST_PERSISTENCE: false
+    # ARCHIVIST_PERSISTENCE: true
     # ARCHIVIST_ETH_PROVIDER: ws://localhost:8545
     # ARCHIVIST_ETH_ACCOUNT: 0x1234567890123456789012345678901234567890
     # file name `archivist-eth-private-key` will be used as a secret name to be mounted to the Pod
     # ARCHIVIST_ETH_PRIVATE_KEY: /opt/archivist-eth-private-key
     # ARCHIVIST_MARKETPLACE_ADDRESS: 0x1234567890123456789012345678901234567890
+    #
+    # Prover
+    # ARCHIVIST_PROVER: true
 
   # -- Extra environment variables
   extraEnv: {}
@@ -199,10 +199,10 @@ archivist:
   # We use postStart lifecycle hook to setup Archivist node marketplace configuration via API
   # mutually exclusive with the lifecycle configuration bellow
   marketplace: {}
-    # totalSize: "8000000000"
-    # duration: "7200"
-    # minPricePerBytePerSecond: "10"
-    # totalCollateral: "9999999999999999"
+    # maximumDuration: 1036800
+    # minimumPricePerBytePerSecond: "1"
+    # maximumCollateralPerByte: "10000"
+    # availableUntil: 0 # you can also skip it
 
 # Init container to pass environment variables dynamically to each replica
 initEnv:
