@@ -84,7 +84,7 @@ spec:
           lifecycle:
             {{- if .Values.lifecycle }}
             {{- toYaml .Values.lifecycle | nindent 12 }}
-            {{- else if and (has "persistence" .Values.archivist.args) .Values.archivist.marketplace }}
+            {{- else if and .Values.archivist.env.ARCHIVIST_PERSISTENCE .Values.archivist.marketplace }}
             postStart:
               exec:
                 command:
@@ -93,28 +93,25 @@ spec:
                   - |
                       sleep 10
 
+                      # Wait for API
                       while true; do
                         curl --max-time 2 http://localhost:{{ .Values.ports.api.containerPort}}/api/archivist/v1/debug/info && break
                         sleep 10
                       done
 
-                      availability=$(curl http://localhost:{{ .Values.ports.api.containerPort}}/api/archivist/v1/sales/availability | jq -r '.[]')
-
-                      if [[ -z "${availability}" ]]; then
-                      availability=$(curl http://localhost:{{ .Values.ports.api.containerPort}}/api/archivist/v1/sales/availability \
+                      # Set availability
+                      curl http://localhost:{{ .Values.ports.api.containerPort}}/api/archivist/v1/sales/availability \
                         --max-time 2 \
                         --request POST \
                         --header 'Content-Type: application/json' \
                         --data '{
-                          "totalSize": "{{ .Values.archivist.marketplace.totalSize }}",
-                          "duration": "{{ .Values.archivist.marketplace.duration }}",
-                          "minPricePerBytePerSecond": "{{ .Values.archivist.marketplace.minPricePerBytePerSecond }}",
-                          "totalCollateral": "{{ .Values.archivist.marketplace.totalCollateral }}"
-                        }')
-                        echo -e "Storage availability was configured \n${availability}" >/opt/storage-availability
-                      else
-                        echo -e "Storage availability already configured \n${availability}" >/opt/storage-availability
-                      fi
+                          "maximumDuration": {{ .Values.archivist.marketplace.maximumDuration }},
+                          "minimumPricePerBytePerSecond": "{{ .Values.archivist.marketplace.minimumPricePerBytePerSecond }}",
+                          "maximumCollateralPerByte": "{{ .Values.archivist.marketplace.maximumCollateralPerByte }}"
+                          {{- if .Values.archivist.marketplace.availableUntil }},
+                          "availableUntil": {{ .Values.archivist.marketplace.availableUntil }}
+                          {{- end }}
+                        }'
             {{- end }}
           {{- if .Values.archivist.command }}
           command:
