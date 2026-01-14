@@ -105,7 +105,7 @@ spec:
                         --request POST \
                         --header 'Content-Type: application/json' \
                         --data '{
-                          "maximumDuration": {{ .Values.archivist.marketplace.maximumDuration }},
+                          "maximumDuration": {{ .Values.archivist.marketplace.maximumDuration | int64 }},
                           "minimumPricePerBytePerSecond": "{{ .Values.archivist.marketplace.minimumPricePerBytePerSecond }}",
                           "maximumCollateralPerByte": "{{ .Values.archivist.marketplace.maximumCollateralPerByte }}"
                           {{- if .Values.archivist.marketplace.availableUntil }},
